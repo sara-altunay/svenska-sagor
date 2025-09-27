@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Speech Synthesis Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    button {
+      padding: 10px 15px;
+      margin: 5px;
+      font-size: 16px;
+    }
+    #status {
+      margin-top: 20px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      min-height: 100px;
+      font-family: monospace;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <h1>Web Speech API Test</h1>
+  <div>
+    <button id="testBtn">Test Speech</button>
+    <button id="voicesBtn">List Voices</button>
+  </div>
+  <div id="status">Status: Ready</div>
+
+  <script>
+    const statusEl = document.getElementById('status');
+    const testBtn = document.getElementById('testBtn');
+    const voicesBtn = document.getElementById('voicesBtn');
+
+    function logStatus(message) {
+      statusEl.textContent += '\n' + message;
+      console.log(message);
+    }
+
+    function testSpeechSupport() {
+      if ('speechSynthesis' in window) {
+        logStatus('✅ Web Speech API is supported');
+        
+        if ('onvoiceschanged' in window.speechSynthesis) {
+          logStatus('✅ onvoiceschanged event is supported');
+        } else {
+          logStatus('⚠️ onvoiceschanged event is NOT supported');
+        }
+        
+        return true;
+      } else {
+        logStatus('❌ Web Speech API is NOT supported in this browser');
+        return false;
+      }
+    }
+
+    function listVoices() {
+      const voices = window.speechSynthesis.getVoices();
+      logStatus(`Found ${voices.length} voices:`);
+      
+      voices.forEach((voice, i) => {
+        logStatus(`\n${i + 1}. ${voice.name} (${voice.lang})`);
+        logStatus(`   URI: ${voice.voiceURI}`);
+        logStatus(`   Default: ${voice.default ? '✅' : '❌'}`);
+        logStatus(`   Local: ${voice.localService ? '✅' : '❌'}`);
+      });
+      
+      return voices.length > 0;
+    }
+
+    function testSpeech() {
+      const utterance = new SpeechSynthesisUtterance(
+        'Hello! This is a test of the Web Speech API. If you can hear this, speech synthesis is working correctly.'
+      );
+      
+      const voices = window.speechSynthesis.getVoices();
+      if (voices.length > 0) {
+        // Try to find a Swedish or English voice
+        const preferredVoice = voices.find(v => v.lang.startsWith('sv') || v.lang.startsWith('en')) || voices[0];
+        utterance.voice = preferredVoice;
+        logStatus(`Using voice: ${preferredVoice.name} (${preferredVoice.lang})`);
+      }
+      
+      utterance.onstart = () => {
+        logStatus('Speech started');
+      };
+      
+      utterance.onend = () => {
+        logStatus('Speech ended');
+      };
+      
+      utterance.onerror = (event) => {
+        logStatus(`Speech error: ${event.error}`);
+      };
+      
+      logStatus('Attempting to speak...');
+      window.speechSynthesis.speak(utterance);
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      if (testSpeechSupport()) {
+        // Some browsers need this event to load voices
+        window.speechSynthesis.onvoiceschanged = () => {
+          logStatus('\nVoices changed event fired');
+          listVoices();
+        };
+        
+        // Initial voices load
+        if (window.speechSynthesis.getVoices().length > 0) {
+          listVoices();
+        } else {
+          logStatus('No voices found initially. Waiting for voices to load...');
+        }
+      }
+      
+      // Set up button click handlers
+      testBtn.addEventListener('click', testSpeech);
+      voicesBtn.addEventListener('click', listVoices);
+    });
+  </script>
+</body>
+</html>

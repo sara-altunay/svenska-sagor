@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Audio Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    button {
+      padding: 10px 15px;
+      margin: 5px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    #status {
+      margin-top: 20px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      min-height: 100px;
+      font-family: monospace;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <h1>Web Speech API Test</h1>
+  <div>
+    <button id="testSpeech">Test Speech</button>
+    <button id="testPause">Pause</button>
+    <button id="testResume">Resume</button>
+    <button id="testStop">Stop</button>
+  </div>
+  <div>
+    <label for="rate">Rate:</label>
+    <input type="range" id="rate" min="0.5" max="2" step="0.1" value="1">
+    <span id="rateValue">1</span>
+  </div>
+  <div id="voices">
+    <h3>Available Voices</h3>
+    <select id="voiceSelect"></select>
+  </div>
+  <div id="status">Status: Ready</div>
+
+  <script>
+    const statusEl = document.getElementById('status');
+    const testBtn = document.getElementById('testSpeech');
+    const pauseBtn = document.getElementById('testPause');
+    const resumeBtn = document.getElementById('testResume');
+    const stopBtn = document.getElementById('testStop');
+    const voiceSelect = document.getElementById('voiceSelect');
+    const rateInput = document.getElementById('rate');
+    const rateValue = document.getElementById('rateValue');
+
+    let synth = window.speechSynthesis;
+    let voices = [];
+    let currentUtterance = null;
+
+    function logStatus(message) {
+      statusEl.textContent += '\n' + message;
+      statusEl.scrollTop = statusEl.scrollHeight;
+      console.log(message);
+    }
+
+    function loadVoices() {
+      voices = synth.getVoices();
+      logStatus(`Loaded ${voices.length} voices`);
+      
+      // Populate voice dropdown
+      voiceSelect.innerHTML = '';
+      voices.forEach((voice, i) => {
+        const option = document.createElement('option');
+        option.textContent = `${voice.name} (${voice.lang})`;
+        option.setAttribute('data-voice-index', i);
+        if (voice.default) {
+          option.textContent += ' -- DEFAULT';
+          option.selected = true;
+        }
+        voiceSelect.appendChild(option);
+      });
+    }
+
+    function speak() {
+      if (synth.speaking) {
+        logStatus('Speech is already in progress');
+        return;
+      }
+
+      const text = 'This is a test of the Web Speech API. If you can hear this, the speech synthesis is working correctly.';
+      const selectedVoiceIndex = voiceSelect.selectedOptions[0]?.getAttribute('data-voice-index');
+      const voice = voices[selectedVoiceIndex] || null;
+      const rate = parseFloat(rateInput.value);
+
+      currentUtterance = new SpeechSynthesisUtterance(text);
+      currentUtterance.voice = voice;
+      currentUtterance.rate = rate;
+      currentUtterance.pitch = 1;
+      currentUtterance.volume = 1;
+
+      currentUtterance.onstart = () => {
+        logStatus('Speech started');
+      };
+
+      currentUtterance.onend = () => {
+        logStatus('Speech ended');
+        currentUtterance = null;
+      };
+
+      currentUtterance.onerror = (event) => {
+        logStatus(`Speech error: ${event.error}`);
+        currentUtterance = null;
+      };
+
+      synth.speak(currentUtterance);
+      logStatus(`Speaking with voice: ${voice ? voice.name : 'default'}, rate: ${rate}`);
+    }
+
+    function pauseSpeech() {
+      if (synth.speaking) {
+        synth.pause();
+        logStatus('Speech paused');
+      } else {
+        logStatus('No speech in progress to pause');
+      }
+    }
+
+    function resumeSpeech() {
+      if (synth.paused) {
+        synth.resume();
+        logStatus('Speech resumed');
+      } else {
+        logStatus('No paused speech to resume');
+      }
+    }
+
+    function stopSpeech() {
+      synth.cancel();
+      logStatus('Speech stopped');
+    }
+
+    // Event listeners
+    testBtn.addEventListener('click', speak);
+    pauseBtn.addEventListener('click', pauseSpeech);
+    resumeBtn.addEventListener('click', resumeSpeech);
+    stopBtn.addEventListener('click', stopSpeech);
+    rateInput.addEventListener('input', (e) => {
+      rateValue.textContent = e.target.value;
+      if (currentUtterance) {
+        currentUtterance.rate = parseFloat(e.target.value);
+      }
+    });
+
+    // Load voices when they become available
+    if (speechSynthesis.onvoiceschanged !== undefined) {
+      speechSynthesis.onvoiceschanged = loadVoices;
+    }
+
+    // Initial load
+    loadVoices();
+    
+    // Some browsers need a small delay to load voices
+    setTimeout(loadVoices, 1000);
+    
+    logStatus('Web Speech API test page loaded. Click "Test Speech" to start.');
+  </script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="300" height="400" viewBox="0 0 300 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="300" height="400" fill="#E74C3C"/>
+  <rect x="30" y="50" width="240" height="300" fill="#FFFFFF" rx="5"/>
+  <text x="150" y="180" font-family="Arial" font-size="22" font-weight="bold" text-anchor="middle" fill="#2C3E50">Tut Tut!</text>
+  <text x="150" y="220" font-family="Arial" font-size="22" font-weight="bold" text-anchor="middle" fill="#2C3E50">Här Kommer Vi</text>
+  <text x="150" y="260" font-family="Arial" font-size="16" text-anchor="middle" fill="#2C3E50">Av: Sara Altunay</text>
+  <text x="150" y="350" font-family="Arial" font-size="14" text-anchor="middle" fill="#7F8C8D">Klicka för att läsa</text>
+</svg>
